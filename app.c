@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include <std_msgs/msg/bool.h>
+#include "ir_mount.h"
 
 #ifdef ESP_PLATFORM
 #include "freertos/FreeRTOS.h"
@@ -33,17 +34,17 @@ rcl_subscription_t subscriber;
 
 std_msgs__msg__Bool msg;
 std_msgs__msg__Bool tmp_msg;
-bool is_on = true;
+ir_mount_t ir_mount;
 
 void subscription_callback(const void *msgin) {
     const std_msgs__msg__Bool *tmp_msg = (const std_msgs__msg__Bool *)msgin;
-    is_on = tmp_msg->data;
+    ir_mount.is_on = tmp_msg->data;
 }
 
 void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
-        msg.data = is_on;
+        msg.data = ir_mount.is_on;
         RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
     }
 }
@@ -51,6 +52,9 @@ void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
 void appMain(void *arg) {
     rcl_allocator_t allocator = rcl_get_default_allocator();
     rclc_support_t support;
+
+    ir_mount.id = 1;
+    ir_mount.is_on = true;
 
     // create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
@@ -91,7 +95,7 @@ void appMain(void *arg) {
     RCCHECK(rclc_executor_add_timer(
         &executor, &timer));
 
-    msg.data = 0;
+    msg.data = true;
 
     while (1) {
         rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
