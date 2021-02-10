@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <std_msgs/msg/int32.h>
+#include <std_msgs/msg/bool.h>
 
 #ifdef ESP_PLATFORM
 #include "freertos/FreeRTOS.h"
@@ -31,22 +31,21 @@
 rcl_publisher_t publisher;
 rcl_subscription_t subscriber;
 
-std_msgs__msg__Int32 msg;
-std_msgs__msg__Int32 tmp_msg;
+std_msgs__msg__Bool msg;
+std_msgs__msg__Bool tmp_msg;
+bool is_on = true;
 
 void subscription_callback(const void *msgin) {
-    const std_msgs__msg__Int32 *tmp_msg = (const std_msgs__msg__Int32 *)msgin;
-    printf("Received: %d\n", tmp_msg->data);
+    const std_msgs__msg__Bool *tmp_msg = (const std_msgs__msg__Bool *)msgin;
+    is_on = tmp_msg->data;
 }
 
 void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
+        msg.data = is_on;
         RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
-        msg.data++;
     }
-    RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
-    msg.data++;
 }
 
 void appMain(void *arg) {
@@ -58,25 +57,25 @@ void appMain(void *arg) {
 
     // create node
     rcl_node_t node;
-    RCCHECK(rclc_node_init_default(&node, "freertos_int32_publisher", "", &support));
+    RCCHECK(rclc_node_init_default(&node, "ir_mount_node", "", &support));
 
     // create publisher
     RCCHECK(rclc_publisher_init_default(
         &publisher,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-        "freertos_int32_publisher"));
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
+        "/ir_mount/is_on"));
 
     // create subscriber
     RCCHECK(rclc_subscription_init_default(
 		&subscriber,
 		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-		"/microROS/int32_subscriber"));
+		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
+		"/ir_mount/toggle"));
 
     // create timer,
     rcl_timer_t timer;
-    const unsigned int timer_timeout = 3000;
+    const unsigned int timer_timeout = 1000;
     RCCHECK(rclc_timer_init_default(
         &timer,
         &support,
