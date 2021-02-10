@@ -86,7 +86,7 @@ void appMain(void *arg) {
     // create executor
     rclc_executor_t executor;
     RCCHECK(rclc_executor_init(
-        &executor, &support.context, 3, &allocator));
+        &executor, &support.context, 2, &allocator));
     RCCHECK(rclc_executor_add_subscription(
         &executor, &subscriber, &tmp_msg, &subscription_callback, ON_NEW_DATA));
     RCCHECK(rclc_executor_add_timer(
