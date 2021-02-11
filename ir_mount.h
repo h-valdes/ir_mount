@@ -2,16 +2,9 @@
 
 #include <driver/gpio.h>
 
-#define GPIO_OUTPUT_IO_0 18
-#define GPIO_OUTPUT_IO_1 19
-#define GPIO_OUTPUT_IO_2 20
-#define GPIO_OUTPUT_IO_3 21
-#define GPIO_OUTPUT_IO_4 22
-#define GPIO_OUTPUT_IO_5 23
 
 #define LED_COUNT 6
-
-int led_array[] = {18, 19, 20, 21, 22, 23};
+int led_array[LED_COUNT] = {18, 19, 20, 21, 22, 23};
 
 typedef struct {
     int led_gpio[LED_COUNT];
@@ -35,6 +28,11 @@ ir_mount_t *IRMount_new(int start_id) {
     for (int i = 0; i < 6; i++) {
         p_ir_mount->led_info.led_gpio[i] = led_array[i];
         p_ir_mount->led_info.led_state[i] = false;
+
+        // Init all GPIO as output and with low value
+        gpio_pad_select_gpio(led_array[i]);
+        gpio_set_direction(led_array[i], GPIO_MODE_OUTPUT);
+        gpio_set_level(led_array[i], 0);
     }
 
     return p_ir_mount;
