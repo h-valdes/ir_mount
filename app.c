@@ -37,28 +37,29 @@ rcl_subscription_t set_id_sub;
 
 std_msgs__msg__Bool pub_state_msg;
 std_msgs__msg__Int32 pub_id_msg;
+
 std_msgs__msg__Bool sub_state_msg;
 std_msgs__msg__Int32 sub_id_msg;
 
-ir_mount_t ir_mount;
+ir_mount_t *p_ir_mount;
 
 void set_state_callback(const void *msgin) {
     const std_msgs__msg__Bool *sub_state_msg = (const std_msgs__msg__Bool *)msgin;
-    ir_mount.state = sub_state_msg->data;
+    IRMount_set_state(p_ir_mount, sub_state_msg->data);
 }
 
 void set_id_callback(const void *msgin) {
     const std_msgs__msg__Int32 *sub_id_msg = (const std_msgs__msg__Int32 *)msgin;
-    ir_mount.id = sub_id_msg->data;
+    IRMount_set_id(p_ir_mount, sub_id_msg->data);
 }
 
 void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
-        pub_state_msg.data = ir_mount.state;
+        pub_state_msg.data = p_ir_mount->state;
         RCSOFTCHECK(rcl_publish(&state_pub, &pub_state_msg, NULL));
 
-        pub_id_msg.data = ir_mount.id;
+        pub_id_msg.data = p_ir_mount->id;
         RCSOFTCHECK(rcl_publish(&id_pub, &pub_id_msg, NULL));
     }
 }
@@ -67,8 +68,8 @@ void appMain(void *arg) {
     rcl_allocator_t allocator = rcl_get_default_allocator();
     rclc_support_t support;
 
-    ir_mount.id = 1;
-    ir_mount.state = true;
+    // Create a new IR Mount
+    p_ir_mount = IRMount_new(2);
 
     // create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
@@ -88,7 +89,7 @@ void appMain(void *arg) {
     RCCHECK(rclc_publisher_init_default(
         &id_pub,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
         "/ir_mount/id"));
 
     // create /ir_mount/set_state subscriber (Bool)
@@ -138,6 +139,7 @@ void appMain(void *arg) {
     RCCHECK(rcl_subscription_fini(&set_state_sub, &node));
     RCCHECK(rcl_subscription_fini(&set_id_sub, &node));
     RCCHECK(rcl_node_fini(&node));
+    IRMount_destroy(p_ir_mount);
 
     vTaskDelete(NULL);
 }

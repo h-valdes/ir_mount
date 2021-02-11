@@ -14,9 +14,19 @@ typedef struct {
     bool state;
 } ir_mount_t;
 
-ir_mount_t *IRMount_new(int id);
+ir_mount_t *IRMount_new(int start_id) {
+    ir_mount_t *p_ir_mount = NULL;
+    p_ir_mount = malloc(sizeof(ir_mount_t));
 
-void IRMount_destroy();
+    p_ir_mount->id = start_id;
+    p_ir_mount->state = false;
+
+    return p_ir_mount;
+}
+
+void IRMount_destroy(ir_mount_t *p_ir_mount) {
+    free(p_ir_mount);
+}
 
 void IRMount_set_state(ir_mount_t *p_ir_mount_t, bool new_state) {
     p_ir_mount_t->state = new_state;
