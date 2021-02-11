@@ -81,28 +81,28 @@ void appMain(void *arg) {
     RCCHECK(rclc_publisher_init_default(
         &state_pub,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, pub_state_msg, Bool),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
         "/ir_mount/state"));
 
     // create /ir_mount/id publisher (Int32)
     RCCHECK(rclc_publisher_init_default(
         &id_pub,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, pub_state_msg, Bool),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
         "/ir_mount/id"));
 
     // create /ir_mount/set_state subscriber (Bool)
     RCCHECK(rclc_subscription_init_default(
         &set_state_sub,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, pub_state_msg, Bool),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
         "/ir_mount/set_state"));
 
     // create /ir_mount/set_id subscriber (Int32)
     RCCHECK(rclc_subscription_init_default(
         &set_id_sub,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, pub_state_msg, Int32),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
         "/ir_mount/set_id"));
 
     // create timer,
