@@ -9,9 +9,19 @@
 #define GPIO_OUTPUT_IO_4 22
 #define GPIO_OUTPUT_IO_5 23
 
+#define LED_COUNT 6
+
+int led_array[] = {18, 19, 20, 21, 22, 23};
+
+typedef struct {
+    int led_gpio[LED_COUNT];
+    bool led_state[LED_COUNT];
+} led_info_t;
+
 typedef struct {
     int id;
     bool state;
+    led_info_t led_info;
 } ir_mount_t;
 
 ir_mount_t *IRMount_new(int start_id) {
@@ -20,6 +30,12 @@ ir_mount_t *IRMount_new(int start_id) {
 
     p_ir_mount->id = start_id;
     p_ir_mount->state = false;
+    
+    // Process the led information
+    for (int i = 0; i < 6; i++) {
+        p_ir_mount->led_info.led_gpio[i] = led_array[i];
+        p_ir_mount->led_info.led_state[i] = false;
+    }
 
     return p_ir_mount;
 }
