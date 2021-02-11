@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include <std_msgs/msg/bool.h>
+#include <std_msgs/msg/int32.h>
 #include "ir_mount.h"
 
 #ifdef ESP_PLATFORM
@@ -30,15 +31,22 @@
     }
 
 rcl_publisher_t publisher;
-rcl_subscription_t subscriber;
+rcl_subscription_t set_state_sub;
+rcl_subscription_t set_id_sub;
 
 std_msgs__msg__Bool msg;
-std_msgs__msg__Bool tmp_msg;
+std_msgs__msg__Bool state_msg;
+std_msgs__msg__Int32 id_msg;
+
 ir_mount_t ir_mount;
 
-void subscription_callback(const void *msgin) {
-    const std_msgs__msg__Bool *tmp_msg = (const std_msgs__msg__Bool *)msgin;
-    ir_mount.is_on = tmp_msg->data;
+void set_state_callback(const void *msgin) {
+    const std_msgs__msg__Bool *state_msg = (const std_msgs__msg__Bool *)msgin;
+    ir_mount.is_on = state_msg->data;
+}
+
+void set_id_callback(const void *msgin) {
+    const std_msgs__msg__Int32 *id_msg = (const std_msgs__msg__Int32 *)msgin;
 }
 
 void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
@@ -63,19 +71,26 @@ void appMain(void *arg) {
     rcl_node_t node;
     RCCHECK(rclc_node_init_default(&node, "ir_mount_node", "", &support));
 
-    // create publisher
+    // create /ir_mount/is_on publisher (Bool)
     RCCHECK(rclc_publisher_init_default(
         &publisher,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
         "/ir_mount/is_on"));
 
-    // create subscriber
+    // create /ir_mount/set_state subscriber (Bool)
     RCCHECK(rclc_subscription_init_default(
-		&subscriber,
+		&set_state_sub,
 		&node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
-		"/ir_mount/toggle"));
+		"/ir_mount/set_state"));
+    
+    // create /ir_mount/set_id subscriber (Int32)
+    RCCHECK(rclc_subscription_init_default(
+		&set_id_sub,
+		&node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+		"/ir_mount/set_id"));
 
     // create timer,
     rcl_timer_t timer;
@@ -91,7 +106,9 @@ void appMain(void *arg) {
     RCCHECK(rclc_executor_init(
         &executor, &support.context, 2, &allocator));
     RCCHECK(rclc_executor_add_subscription(
-        &executor, &subscriber, &tmp_msg, &subscription_callback, ON_NEW_DATA));
+        &executor, &set_state_sub, &state_msg, &set_state_callback, ON_NEW_DATA));
+    RCCHECK(rclc_executor_add_subscription(
+        &executor, &set_id_sub, &id_msg, &set_id_callback, ON_NEW_DATA));
     RCCHECK(rclc_executor_add_timer(
         &executor, &timer));
 
@@ -104,7 +121,8 @@ void appMain(void *arg) {
 
     // free resources
     RCCHECK(rcl_publisher_fini(&publisher, &node));
-    RCCHECK(rcl_subscription_fini(&subscriber, &node));
+    RCCHECK(rcl_subscription_fini(&set_state_sub, &node));
+    RCCHECK(rcl_subscription_fini(&set_id_sub, &node));
     RCCHECK(rcl_node_fini(&node));
 
     vTaskDelete(NULL);
