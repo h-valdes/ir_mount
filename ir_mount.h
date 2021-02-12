@@ -2,7 +2,6 @@
 
 #include <driver/gpio.h>
 
-
 #define LED_COUNT 6
 int led_array[LED_COUNT] = {18, 19, 20, 21, 22, 23};
 
@@ -23,7 +22,7 @@ ir_mount_t *IRMount_new(int start_id) {
 
     p_ir_mount->id = start_id;
     p_ir_mount->state = false;
-    
+
     // Process the led information
     for (int i = 0; i < 6; i++) {
         p_ir_mount->led_info.led_gpio[i] = led_array[i];
@@ -51,4 +50,3 @@ void IRMount_set_id(ir_mount_t *p_ir_mount_t, int new_id) {
         p_ir_mount_t->id = new_id;
     }
 }
-
