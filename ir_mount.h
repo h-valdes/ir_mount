@@ -1,9 +1,19 @@
+/*
+    Schematic representation of the IR mount (L-shape)
+    (34)=(35)=(32)=(33)=(25)
+                        |  |
+                        |  |
+                        (26)
+    LEDs 34 and 26 are always on and set as reference (if the IR mount is 
+    on at all)
+*/
+
 #pragma once
 
 #include <driver/gpio.h>
 
 #define LED_COUNT 6
-int led_array[LED_COUNT] = {18, 19, 20, 21, 22, 23};
+int led_array[LED_COUNT] = {34, 35, 32, 33, 25, 26};
 
 typedef struct {
     int led_gpio[LED_COUNT];
@@ -51,12 +61,23 @@ void IRMount_turn_off(ir_mount_t *p_ir_mount) {
 }
 
 void IRMount_turn_on(ir_mount_t *p_ir_mount) {
+    int ref_gpio_0 = p_ir_mount->led_info.led_gpio[0];
+    int ref_gpio_1 = p_ir_mount->led_info.led_gpio[LED_COUNT - 1];
 
+    // Turn on the reference gpio's 
+    gpio_set_level(ref_gpio_0, 1);
+    gpio_set_level(ref_gpio_1, 1); 
+
+    for (int i = 1; i < 5; i++) {
+        int id_gpio = p_ir_mount->led_info.led_gpio[LED_COUNT - 1 - i];
+        gpio_set_level(id_gpio, 1);
+    }
 }
 
 void IRMount_set_state(ir_mount_t *p_ir_mount, bool new_state) {
     p_ir_mount->state = new_state;
     if (new_state) {
+        IRMount_turn_off(p_ir_mount); // Turn first every led off 
         IRMount_turn_on(p_ir_mount);
     } else {
         IRMount_turn_off(p_ir_mount);
@@ -64,7 +85,7 @@ void IRMount_set_state(ir_mount_t *p_ir_mount, bool new_state) {
 }
 
 void IRMount_set_id(ir_mount_t *p_ir_mount, int new_id) {
-    if ((new_id > 0) && (new_id < 7)) {
+    if ((new_id >= 1) && (new_id <= 4)) {
         p_ir_mount->id = new_id;
     }
 }
