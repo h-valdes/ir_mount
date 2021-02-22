@@ -1,11 +1,20 @@
 /*
     Schematic representation of the IR mount (L-shape)
     (34)=(35)=(32)=(33)=(25)
-                        |  |
-                        |  |
+                        ||
+                        ||
                         (26)
-    LEDs 34 and 26 are always on and set as reference (if the IR mount is 
-    on at all)
+
+    LEDs 34, 25 26 are always on and set as reference 
+    (1)=(data)=(data)=(data)=(1)
+                            ||
+                            ||
+                            (1)
+    
+    Using Triple Repetition Code for the ID Encoding with a Hamming Distance
+    of 3
+        ID 0 = 000 
+        ID 1 = 111
 */
 
 #pragma once
@@ -62,15 +71,19 @@ void IRMount_turn_off(ir_mount_t *p_ir_mount) {
 
 void IRMount_turn_on(ir_mount_t *p_ir_mount) {
     int ref_gpio_0 = p_ir_mount->led_info.led_gpio[0];
-    int ref_gpio_1 = p_ir_mount->led_info.led_gpio[LED_COUNT - 1];
+    int ref_gpio_1 = p_ir_mount->led_info.led_gpio[LED_COUNT - 2];
+    int ref_gpio_2 = p_ir_mount->led_info.led_gpio[LED_COUNT - 1];
 
     // Turn on the reference gpio's 
     gpio_set_level(ref_gpio_0, 1);
     gpio_set_level(ref_gpio_1, 1); 
+    gpio_set_level(ref_gpio_2, 1); 
 
-    for (int i = 1; i < 5; i++) {
-        int id_gpio = p_ir_mount->led_info.led_gpio[LED_COUNT - 1 - i];
-        gpio_set_level(id_gpio, 1);
+    for (int i = 1; i <= 3; i++) {
+        // The ID can only be 1 or 0
+        int state = p_ir_mount->id; 
+        int id_gpio = p_ir_mount->led_info.led_gpio[LED_COUNT];
+        gpio_set_level(id_gpio, state);
     }
 }
 
@@ -85,7 +98,7 @@ void IRMount_set_state(ir_mount_t *p_ir_mount, bool new_state) {
 }
 
 void IRMount_set_id(ir_mount_t *p_ir_mount, int new_id) {
-    if ((new_id >= 1) && (new_id <= 4)) {
+    if (new_id == 0 || new_id == 1) {
         p_ir_mount->id = new_id;
     }
 }
