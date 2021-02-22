@@ -70,6 +70,7 @@ void appMain(void *arg) {
 
     // Create a new IR Mount
     p_ir_mount = IRMount_new(1);
+    IRMount_set_state(p_ir_mount, true);
 
     // create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
