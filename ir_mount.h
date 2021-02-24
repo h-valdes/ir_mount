@@ -23,75 +23,57 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define LED_COUNT 6
-uint32_t global_led_array[LED_COUNT] = {12, 14, 27, 26, 25, 33};
+// #define LED_COUNT 6
+#define LED_1 14
+#define LED_2 27
+#define LED_3 26
+
+#define REF_LED_1 12
+#define REF_LED_2 25
+#define REF_LED_3 33
+// uint32_t led_array[LED_COUNT] = {12, 14, 27, 26, 25, 33};
 
 typedef struct {
     int id;
     bool state;
-    uint32_t *led_array;
 } ir_mount_t;
 
-ir_mount_t *IRMount_new(int start_id) {
-    ir_mount_t *p_ir_mount = NULL;
-    p_ir_mount = (ir_mount_t *)malloc(sizeof(ir_mount_t));
-    p_ir_mount->led_array = (uint32_t *)malloc(sizeof(uint32_t) * LED_COUNT);
-    p_ir_mount->id = start_id;
-    p_ir_mount->state = false;
-
-    // Process the led information
-    for (int i = 0; i < LED_COUNT; i++) {
-        uint32_t gpio = global_led_array[i];
-
-        p_ir_mount->led_array[i] = gpio;
-
-        // Init all GPIO as output and with low value
-        gpio_pad_select_gpio(gpio);
-        gpio_set_direction(gpio, GPIO_MODE_OUTPUT);
-        gpio_set_level(gpio, 0);
-    }
-
-    return p_ir_mount;
-}
-
-void IRMount_destroy(ir_mount_t *p_ir_mount) {
-    free(p_ir_mount->led_array);
-    free(p_ir_mount);
+void set_led(uint32_t led, int state) {
+    gpio_pad_select_gpio(led);
+    gpio_set_direction(led, GPIO_MODE_OUTPUT);
+    gpio_set_level(led, state);
 }
 
 void IRMount_turn_off(ir_mount_t *p_ir_mount) {
-    for (int i = 0; i < LED_COUNT; i++) {
-        uint32_t gpio = p_ir_mount->led_array[i];
-        gpio_set_level(gpio, 0);
-    }
+    set_led(LED_1, 0);
+    set_led(LED_2, 0);
+    set_led(LED_3, 0);
+    set_led(REF_LED_1, 0);
+    set_led(REF_LED_2, 0);
+    set_led(REF_LED_3, 0);
 }
 
 void IRMount_turn_on(ir_mount_t *p_ir_mount) {
-    uint32_t ref_gpio_0 = 33;
-    uint32_t ref_gpio_1 = 25;
-    uint32_t ref_gpio_2 = 12;
 
     // Turn on the reference gpio's 
-    gpio_pad_select_gpio(ref_gpio_0);
-    gpio_set_direction(ref_gpio_0, GPIO_MODE_OUTPUT); 
-    gpio_set_level(ref_gpio_0, 1);
-
-    gpio_pad_select_gpio(ref_gpio_1);
-    gpio_set_direction(ref_gpio_1, GPIO_MODE_OUTPUT); 
-    gpio_set_level(ref_gpio_1, 1);
-
-    gpio_pad_select_gpio(ref_gpio_2);
-    gpio_set_direction(ref_gpio_2, GPIO_MODE_OUTPUT); 
-    gpio_set_level(ref_gpio_2, 1);
+    set_led(REF_LED_1, 1);
+    set_led(REF_LED_2, 1);
+    set_led(REF_LED_3, 1);
 
     int state = p_ir_mount->id;
-
-    for (int i = 1; i < 4; i++) {
-        // The ID can only be 1 or 0
-        uint32_t id_gpio = p_ir_mount->led_array[LED_COUNT];
-        gpio_pad_select_gpio(id_gpio);
-        gpio_set_direction(id_gpio, GPIO_MODE_OUTPUT); 
-        gpio_set_level(id_gpio, state);
+    switch (state) {
+        case 0:
+            set_led(LED_1, 0);
+            set_led(LED_2, 0);
+            set_led(LED_3, 0);
+            break;
+        case 1:
+            set_led(LED_1, 1);
+            set_led(LED_2, 1);
+            set_led(LED_3, 1);
+            break;
+        default:
+            break;
     }
 }
 
@@ -109,4 +91,20 @@ void IRMount_set_id(ir_mount_t *p_ir_mount, int new_id) {
     if (new_id == 0 || new_id == 1) {
         p_ir_mount->id = new_id;
     }
+}
+
+ir_mount_t *IRMount_new(int start_id) {
+    ir_mount_t *p_ir_mount = NULL;
+    p_ir_mount = (ir_mount_t *)malloc(sizeof(ir_mount_t));
+    p_ir_mount->id = start_id;
+    p_ir_mount->state = false;
+
+    // Turn off every GPIO of the ESP32
+    IRMount_turn_off(p_ir_mount);
+    
+    return p_ir_mount;
+}
+
+void IRMount_destroy(ir_mount_t *p_ir_mount) {
+    free(p_ir_mount);
 }
