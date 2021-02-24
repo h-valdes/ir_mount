@@ -1,9 +1,9 @@
 /*
     Schematic representation of the IR mount (L-shape)
-    (26)=(25)=(33)=(32)=(35)
+    (12)=(14)=(27)=(26)=(25)
                         ||
                         ||
-                        (34)
+                        (33)
 
     LEDs 26, 35, 34 are always on and set as reference 
     (1)=(data)=(data)=(data)=(1)
@@ -20,21 +20,22 @@
 #pragma once
 
 #include <driver/gpio.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #define LED_COUNT 6
 uint32_t global_led_array[LED_COUNT] = {12, 14, 27, 26, 25, 33};
-// uint32_t global_led_array[LED_COUNT] = {15, 2, 0, 4, 16, 17};
 
 typedef struct {
     int id;
     bool state;
-    uint32_t led_array[LED_COUNT];
+    uint32_t *led_array;
 } ir_mount_t;
 
 ir_mount_t *IRMount_new(int start_id) {
     ir_mount_t *p_ir_mount = NULL;
-    p_ir_mount = malloc(sizeof(ir_mount_t));
-
+    p_ir_mount = (ir_mount_t *)malloc(sizeof(ir_mount_t));
+    p_ir_mount->led_array = (uint32_t *)malloc(sizeof(uint32_t) * LED_COUNT);
     p_ir_mount->id = start_id;
     p_ir_mount->state = false;
 
@@ -54,6 +55,7 @@ ir_mount_t *IRMount_new(int start_id) {
 }
 
 void IRMount_destroy(ir_mount_t *p_ir_mount) {
+    free(p_ir_mount->led_array);
     free(p_ir_mount);
 }
 
